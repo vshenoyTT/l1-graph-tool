@@ -68,7 +68,7 @@ def main():
     '''
     st.markdown(hide_decoration_bar_style, unsafe_allow_html=True)
 
-    st.title("L1 Utilization Visualizer")
+    st.title("Tenstorrent L1 Utilization Graph")
     
     uploaded_file = st.file_uploader("Choose a SQLite file", type="sqlite")
 
