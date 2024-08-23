@@ -61,6 +61,13 @@ def plot_buffers(sqlite_file):
         st.dataframe(operation_info_df, use_container_width=True)
 
 def main():
+    hide_decoration_bar_style = '''
+    <style>
+        header {visibility: hidden;}
+    </style>
+    '''
+    st.markdown(hide_decoration_bar_style, unsafe_allow_html=True)
+
     st.title("L1 Utilization Visualizer")
     
     uploaded_file = st.file_uploader("Choose a SQLite file", type="sqlite")
