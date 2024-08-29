@@ -2,7 +2,6 @@ import sqlite3
 import pandas as pd
 import matplotlib.pyplot as plt
 import streamlit as st
-import mplcursors
 
 st.set_page_config(layout="wide")
 
@@ -19,8 +18,9 @@ def plot_buffers(sqlite_file):
 
     df['end_address'] = df['address'] + df['max_size_per_bank']
     
-    # Sort the dataframe by address to ensure proper plotting order
+    # Sort the dataframe by address
     df = df.sort_values(by='address')
+    df = df.sort_values(by='operation_id', ascending=False)  # Flip the DataFrame
 
     fig, ax = plt.subplots(figsize=(12, 200), dpi=60)
 
@@ -31,13 +31,16 @@ def plot_buffers(sqlite_file):
     ax.set_xlabel('Address')
     ax.set_ylabel('Operation ID')
     ax.set_title('L1 Buffer Utilization')
-    
+
     ax.grid(True, axis='x')
 
-    # Clamp y-axis range to the min and max operation ID
+    # Set y-axis limits
     min_op_id = df['operation_id'].min()
     max_op_id = df['operation_id'].max()
     ax.set_ylim(min_op_id - 1, max_op_id + 1)
+
+    # Reverse the y-axis
+    ax.invert_yaxis()
 
     # Set x-ticks as required
     minTick = df['address'].min() - 100000
@@ -46,16 +49,10 @@ def plot_buffers(sqlite_file):
     ax.set_xticks(x_ticks)
     ax.set_xticklabels([f'{(x // 1000)}k' for x in x_ticks])
 
-    # Adding a cursor to display operation names
-    def make_cursor_callback(local_df):
-        def on_add(sel):
-            idx = sel.target.index
-            operation_name = local_df.iloc[idx]['operation_name']
-            sel.annotation.set_text(operation_name)
-        return on_add
-
-    cursor = mplcursors.cursor(ax.containers, hover=True)
-    cursor.connect("add", make_cursor_callback(df))
+    # Create a secondary y-axis on the right side with the same ticks
+    secax = ax.secondary_yaxis('right')
+    secax.set_yticks(df['operation_id'])
+    secax.set_yticklabels(df['operation_id'])
 
     st.pyplot(fig)
     
