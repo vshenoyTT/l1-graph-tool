@@ -5,7 +5,7 @@ import streamlit as st
 
 st.set_page_config(layout="wide")
 
-def plot_buffers(sqlite_file):
+def plot_buffers(sqlite_file, x_range_option):
     conn = sqlite3.connect(sqlite_file)
     
     query = """
@@ -42,12 +42,26 @@ def plot_buffers(sqlite_file):
     # Reverse the y-axis
     ax.invert_yaxis()
 
-    # Set x-ticks as required
-    minTick = df['address'].min() - 100000
-    maxTick = df['end_address'].max()
-    x_ticks = range(minTick, maxTick + 1, 100000)
+    minTick = 0
+    max_range = 1_500_000
+    # Adjust x-ticks based on the selected range option
+    if x_range_option == "Half":
+        max_range = 1_000_000
+    elif x_range_option == "Full":
+        max_range = 1_500_000
+    else:  # Optimized
+        minTick = df['address'].min() - 100000
+        max_range = df['end_address'].max()
+    
+    x_ticks = range(minTick, max_range + 1, 100000)
     ax.set_xticks(x_ticks)
     ax.set_xticklabels([f'{(x // 1000)}k' for x in x_ticks])
+
+    # Add a secondary x-axis on top with the same ticks and labels
+    secax_top = ax.secondary_xaxis('top')
+    secax_top.set_xticks(x_ticks)
+    secax_top.set_xticklabels([f'{(x // 1000)}k' for x in x_ticks])
+    secax_top.set_xlabel('Address')
 
     # Create a secondary y-axis on the right side with the same ticks
     secax = ax.secondary_yaxis('right')
@@ -73,13 +87,16 @@ def main():
 
     st.title("Tenstorrent L1 Utilization Graph")
 
+    # Add a selectbox to choose the x-range option
+    x_range_option = st.selectbox("Select Address Range", ["Half", "Full", "Optimized"])
+
     uploaded_file = st.file_uploader("Choose a SQLite file", type="sqlite")
 
     if uploaded_file is not None:
         with open("temp_sqlite_file.sqlite", "wb") as f:
             f.write(uploaded_file.getbuffer())
         
-        plot_buffers("temp_sqlite_file.sqlite")
+        plot_buffers("temp_sqlite_file.sqlite", x_range_option)
 
 if __name__ == "__main__":
     main()
